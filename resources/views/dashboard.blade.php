@@ -362,7 +362,7 @@
             width: 90%;
 
             max-width: 800px;
-            height: 100%;
+            height: fit-content;
             box-shadow: 0 30px 100px rgba(0, 0, 0, 0.3);
             animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -945,7 +945,7 @@
                             <div class="appointment-service">
                                 @foreach ($rdv->services as $service)
                                     {{ $service->name }}@if (!$loop->last)
-                                        ,
+                                        
                                     @endif
                                 @endforeach
                             </div>

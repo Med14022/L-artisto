@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('horaires', function (Blueprint $table) {
             $table->id();
 
-            $table->Integer('id_coiffeur');
+            $table->unsignedBigInteger('id_coiffeur');
             $table->date('date');
             $table->foreign('id_coiffeur')->references('id')->on('users')->onDelete('cascade');
             $table->string('horaire_jour')->default('10:00-14:00/15:00-21:00');

@@ -31,8 +31,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::post('/horaire/days', [DashboardController::class, 'getWorkingDays'])
+     ->middleware('auth')
+     ->name('horaire.days');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
      ->middleware('auth') // si tu veux protéger l'accès
      ->name('home');
+
+Route::post('/reservation', [DashboardController::class, 'store'])
+     ->middleware('auth') // si tu veux protéger l'accès
+     ->name('reservation');
 
 require __DIR__.'/auth.php';

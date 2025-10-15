@@ -945,7 +945,7 @@
                             <div class="appointment-service">
                                 @foreach ($rdv->services as $service)
                                     {{ $service->name }}@if (!$loop->last)
-                                        
+
                                     @endif
                                 @endforeach
                             </div>
@@ -1086,9 +1086,17 @@
                     <button id="nextBtn" class="btn btn-gold" onclick="changeStep(1)" disabled>
                         Suivant →
                     </button>
-                    <button id="confirmBtn" class="btn btn-success" onclick="confirmBooking()" style="display: none;">
-                        🎉 Confirmer la réservation
-                    </button>
+                    <form action="{{ route('reservation') }}" method="POST" id="bookingForm" style="flex: 1; margin: 0;">
+                        @csrf
+                        <button id="confirmBtn" type="button" class="btn btn-success" onclick="confirmBooking()" style="display: none;">
+                            🎉 Confirmer la réservation
+                        </button>
+                        <input type="text" hidden name="client_id" id="client_id" value="{{ Auth::user()->id }}">
+                        <input type="text" hidden name="service_id" id="service_id">
+                        <input type="text" hidden name="stylist_id" id="stylist_id">
+                        <input type="text" hidden name="date" id="date">
+                        <input type="text" hidden name="time" id="time">
+                    </form>
                 </div>
             </div>
         </div>
@@ -1318,7 +1326,7 @@
                 const dayNumber = date.getDate();
                 const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
 
-                const isDisabled = date.getDay() === 2; // Aujourd'hui ou dimanche
+                const isDisabled = date.getDay() === 2; // Désactiver les mardis (jour 2)
 
                 const dateOption = document.createElement('div');
                 dateOption.className = `date-option ${isDisabled ? 'disabled' : ''}`;
@@ -1401,12 +1409,16 @@
             confirmBtn.innerHTML = '<div style="width: 20px; height: 20px; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>';
             confirmBtn.disabled = true;
 
-            setTimeout(() => {
-                alert('Votre rendez-vous a été confirmé avec succès!\nVous recevrez un SMS de confirmation.');
-                closeBooking();
-                confirmBtn.innerHTML = originalText;
-                confirmBtn.disabled = false;
-            }, 2000);
+
+            document.getElementById('service_id').value = bookingData.service.id;
+            document.getElementById('stylist_id').value = bookingData.stylist.id;
+            document.getElementById('date').value = bookingData.date.value;
+            document.getElementById('time').value = bookingData.time;
+
+
+            // Soumettre le formulaire au serveur
+            // les champs hidden sont déjà remplis ci-dessus
+            document.getElementById('bookingForm').submit();
         }
 
         // Initialiser les événements
@@ -1426,6 +1438,11 @@
                     const stylistId = option.getAttribute('data-stylist');
                     const stylistName = option.getAttribute('data-name');
                     selectStylist(stylistId, stylistName);
+                    // fetch working days for this stylist and populate dates
+                    fetchWorkingDays(stylistId);
+                    if (bookingData.date) {
+                        fetchHoraireForStylist(stylistId, bookingData.date.value);
+                    }
                 }
             });
 
@@ -1462,6 +1479,53 @@
                     }, 500);
                 }, 2000);
             });
+
+            // Fetch working days for a stylist and populate dateSelection
+            async function fetchWorkingDays(stylistId) {
+                const token = document.querySelector('input[name="_token"]').value;
+                const loading = document.getElementById('loadingDate');
+                const selection = document.getElementById('dateSelection');
+                loading.style.display = 'block';
+                selection.style.display = 'none';
+                try {
+                    const res = await fetch('{{ route("horaire.days") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token
+                        },
+                        body: JSON.stringify({ stylist_id: stylistId })
+                    });
+                    const data = await res.json();
+                    selection.innerHTML = '';
+                    const days = data.days || [];
+                    if (days.length === 0) {
+                        selection.innerHTML = '<div class="empty-state">Aucun jour de travail trouvé pour ce coiffeur.</div>';
+                        loading.style.display = 'none';
+                        selection.style.display = 'grid';
+                        return;
+                    }
+                    days.forEach(d => {
+                        const dateObj = new Date(d);
+                        const dayName = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
+                        const dayNumber = dateObj.getDate();
+                        const monthName = dateObj.toLocaleDateString('fr-FR', { month: 'short' });
+                        const dateOption = document.createElement('div');
+                        dateOption.className = 'date-option';
+                        dateOption.setAttribute('data-date', d);
+                        dateOption.innerHTML = `\n                            <div style="font-size: 12px; opacity: 0.8;">${dayName}</div>\n                            <div style="font-size: 16px; font-weight: bold;">${dayNumber}</div>\n                            <div style="font-size: 11px; opacity: 0.6;">${monthName}</div>\n                        `;
+                        dateOption.onclick = () => selectDate(d, `${dayName} ${dayNumber} ${monthName}`);
+                        selection.appendChild(dateOption);
+                    });
+                    loading.style.display = 'none';
+                    selection.style.display = 'grid';
+                } catch (err) {
+                    console.error(err);
+                    loading.style.display = 'none';
+                    selection.style.display = 'grid';
+                    selection.innerHTML = '<div class="empty-state">Erreur lors de la récupération des jours.</div>';
+                }
+            }
 
             // Initialisation
             updateNavigationButtons();

@@ -351,8 +351,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .booking-popup {
@@ -360,9 +365,14 @@
             backdrop-filter: blur(15px);
             border-radius: 25px;
             width: 90%;
-
             max-width: 800px;
-            height: fit-content;
+            /* layout: column with fixed max height; content scrolls inside */
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
+            /* never taller than viewport */
+            overflow: hidden;
+            /* scroll must happen in .booking-content */
             box-shadow: 0 30px 100px rgba(0, 0, 0, 0.3);
             animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -374,6 +384,7 @@
                 opacity: 0;
                 transform: translateY(60px) scale(0.9);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -495,10 +506,10 @@
 
         .booking-content {
             padding: 35px;
-            min-height: 500px;
-            display: flex;
-            flex-direction: column;
+            /* fill available space and scroll internally if content is too tall */
+            flex: 1 1 auto;
             overflow-y: auto;
+            box-sizing: border-box;
         }
 
         .step-content {
@@ -515,6 +526,7 @@
                 opacity: 0;
                 transform: translateX(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -533,13 +545,15 @@
             gap: 12px;
         }
 
-        .service-selection, .stylist-selection {
+        .service-selection,
+        .stylist-selection {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
 
-        .service-option, .stylist-option {
+        .service-option,
+        .stylist-option {
             border: 3px solid #e0e0e0;
             border-radius: 15px;
             padding: 25px;
@@ -549,13 +563,15 @@
             background: #f9f9f9;
         }
 
-        .service-option:hover, .stylist-option:hover {
+        .service-option:hover,
+        .stylist-option:hover {
             border-color: #D4AF37;
             transform: translateY(-5px);
             box-shadow: 0 12px 30px rgba(212, 175, 55, 0.2);
         }
 
-        .service-option.selected, .stylist-option.selected {
+        .service-option.selected,
+        .stylist-option.selected {
             border-color: #D4AF37;
             background: linear-gradient(135deg, #D4AF37, #FFD700);
             color: #1a1a1a;
@@ -698,10 +714,14 @@
         }
 
         .nav-buttons {
+            /* footer area — stays inside white popup under the scrollable content */
             display: flex;
             justify-content: space-between;
-            margin-top: 35px;
             gap: 20px;
+            padding: 16px 24px;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid rgba(0, 0, 0, 0.04);
+            flex: 0 0 auto;
         }
 
         .btn {
@@ -774,8 +794,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         @media (max-width: 768px) {
@@ -802,7 +827,8 @@
                 max-height: 90vh;
             }
 
-            .service-selection, .stylist-selection {
+            .service-selection,
+            .stylist-selection {
                 grid-template-columns: 1fr;
             }
 
@@ -873,15 +899,16 @@
         <div class="services-grid">
             <!-- Dans la section services -->
             @foreach ($services as $service)
-            <div class="service-card">
-                <div class="service-icon">
-                    <img src="{{ $service->image ?? 'default_image_url' }}" alt="{{ $service->name }}">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <img src="{{ $service->image ?? 'default_image_url' }}" alt="{{ $service->name }}">
+                    </div>
+                    <div class="service-name">{{ $service->name }}</div>
+                    <div class="service-price">{{ $service->price }}</div>
+                    <div class="service-description">{{ $service->description }}</div>
+                    <button class="btn-primary btn-book"
+                        onclick="openBooking('{{ $service->id }}', '{{ $service->name }}', '{{ $service->price }}', '{{ $service->duration ?? 60 }}')">Réserver</button>
                 </div>
-                <div class="service-name">{{ $service->name }}</div>
-                <div class="service-price">{{ $service->price }}</div>
-                <div class="service-description">{{ $service->description }}</div>
-                <button class="btn-primary btn-book " onclick="openBooking('{{ $service->id }}', '{{ $service->name }}', '{{ $service->price }}')">Réserver</button>
-            </div>
             @endforeach
         </div>
 
@@ -937,7 +964,7 @@
         <div class="card">
             <h2 class="card-title">📋 Historique des Rendez-vous</h2>
             @foreach ($rdvs as $rdv)
-                @if ($rdv->etat == "terminé" )
+                @if ($rdv->etat == "terminé")
                     <div class="appointment-item">
                         <div class="appointment-details">
                             <div class="appointment-date">Le : {{ $rdv->date }} à {{ substr($rdv->heure, 0, 5) }}
@@ -994,16 +1021,20 @@
             </div>
 
             <div class="booking-content">
+                <!-- Étapes 1..5 (service, stylist, date, time, summary) -->
                 <!-- Étape 1: Sélection du service -->
                 <div id="stepContent1" class="step-content active">
                     <div class="step-title">🎯 Choisissez votre service</div>
                     <div class="service-selection">
                         @foreach ($services as $service)
-                        <div class="service-option" data-service="{{ $service->id }}" data-name="{{ $service->name }}" data-price="{{ $service->price }}">
-                            <div style="font-size: 48px; margin-bottom: 15px;">✂️</div>
-                            <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">{{ $service->name }}</div>
-                            <div style="font-size: 24px; color: #D4AF37; font-weight: bold;">{{ $service->price }} DT</div>
-                        </div>
+                            <div class="service-option" data-service="{{ $service->id }}" data-name="{{ $service->name }}"
+                                data-price="{{ $service->price }}" data-duration="{{ $service->duration ?? 60 }}">
+                                <div style="font-size: 48px; margin-bottom: 15px;">✂️</div>
+                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">{{ $service->name }}
+                                </div>
+                                <div style="font-size: 24px; color: #D4AF37; font-weight: bold;">{{ $service->price }} DT
+                                </div>
+                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -1020,7 +1051,8 @@
                         @foreach ($users as $user)
                             <div class="stylist-option" data-stylist="{{ $user->id }}" data-name="{{ $user->name }}">
                                 <div class="stylist-avatar">👨</div>
-                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">{{ $user->name }}</div>
+                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">{{ $user->name }}
+                                </div>
                                 <div style="color: #666; font-size: 14px;">{{ $user->address }}</div>
                             </div>
                         @endforeach
@@ -1042,12 +1074,21 @@
                 <!-- Étape 4: Sélection de l'heure -->
                 <div id="stepContent4" class="step-content">
                     <div class="step-title">⏰ Choisissez votre heure</div>
-                    <div id="loadingTime" class="loading-state">
+
+                    <div id="loadingTime" class="loading-state" aria-hidden="true">
                         <div class="spinner"></div>
                         <p>Chargement des créneaux disponibles...</p>
                     </div>
-                    <div id="timeSelection" class="time-selection" style="display: none;">
-                        <!-- Les heures seront générées dynamiquement -->
+
+                    <!-- message affiché s'il n'y a pas de créneaux -->
+                    <div id="noTimeMessage" class="empty-state" style="display: none;" aria-live="polite">
+                        Aucun créneau disponible pour cette date.
+                    </div>
+
+                    <!-- conteneur où la fonction generateTimes injecte les créneaux -->
+                    <div id="timeSelection" class="time-selection" style="display: none;" role="list"
+                        aria-live="polite">
+                        <!-- Les heures seront générées dynamiquement par generateTimes(times) -->
                     </div>
                 </div>
 
@@ -1078,7 +1119,7 @@
                     </div>
                 </div>
 
-                <!-- Boutons de navigation -->
+                <!-- Boutons de navigation : placés ici (hors du scroll interne) -->
                 <div class="nav-buttons">
                     <button id="prevBtn" class="btn btn-secondary" onclick="changeStep(-1)" style="display: none;">
                         ← Précédent
@@ -1086,9 +1127,11 @@
                     <button id="nextBtn" class="btn btn-gold" onclick="changeStep(1)" disabled>
                         Suivant →
                     </button>
-                    <form action="{{ route('reservation') }}" method="POST" id="bookingForm" style="flex: 1; margin: 0;">
+                    <form action="{{ route('reservation') }}" method="POST" id="bookingForm"
+                        style="flex: 1; margin: 0;">
                         @csrf
-                        <button id="confirmBtn" type="button" class="btn btn-success" onclick="confirmBooking()" style="display: none;">
+                        <button id="confirmBtn" type="button" class="btn btn-success" onclick="confirmBooking()"
+                            style="display: none;">
                             🎉 Confirmer la réservation
                         </button>
                         <input type="text" hidden name="client_id" id="client_id" value="{{ Auth::user()->id }}">
@@ -1113,13 +1156,13 @@
         };
 
         // Ouvrir le popup de réservation
-        function openBooking(serviceId = null, serviceName = null, servicePrice = null) {
+        function openBooking(serviceId = null, serviceName = null, servicePrice = null, serviceDuration = 60) {
             document.getElementById('bookingOverlay').style.display = 'flex';
             document.body.style.overflow = 'hidden';
 
             // Si un service spécifique est sélectionné depuis les cartes
             if (serviceId && serviceName && servicePrice) {
-                selectService(serviceId, serviceName, servicePrice);
+                selectService(serviceId, serviceName, servicePrice, serviceDuration);
             }
 
             updateProgress();
@@ -1231,8 +1274,13 @@
         }
 
         // Sélection de service
-        function selectService(serviceId, serviceName, servicePrice) {
-            bookingData.service = { id: serviceId, name: serviceName, price: servicePrice };
+        function selectService(serviceId, serviceName, servicePrice, serviceDuration = 60) {
+            bookingData.service = {
+                id: serviceId,
+                name: serviceName,
+                price: servicePrice,
+                duration: parseInt(serviceDuration, 10) || 60
+            };
 
             document.querySelectorAll('.service-option').forEach(option => {
                 option.classList.remove('selected');
@@ -1244,6 +1292,7 @@
             }
 
             updateNavigationButtons();
+            updateSummary();
         }
 
         // Sélection de coiffeur
@@ -1256,30 +1305,23 @@
 
             document.querySelector(`[data-stylist="${stylistId}"]`).classList.add('selected');
             updateNavigationButtons();
+            updateSummary();
         }
 
         // Sélection de date
         function selectDate(dateValue, dateDisplay) {
             bookingData.date = { value: dateValue, display: dateDisplay };
 
-            document.querySelectorAll('.date-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-
-            document.querySelector(`[data-date="${dateValue}"]`).classList.add('selected');
+            document.querySelectorAll('.date-option').forEach(option => option.classList.remove('selected'));
+            const el = document.querySelector(`[data-date="${dateValue}"]`);
+            if (el) el.classList.add('selected');
             updateNavigationButtons();
-        }
 
-        // Sélection d'heure
-        function selectTime(timeValue) {
-            bookingData.time = timeValue;
-
-            document.querySelectorAll('.time-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-
-            document.querySelector(`[data-time="${timeValue}"]`).classList.add('selected');
-            updateNavigationButtons();
+            // si un coiffeur est déjà choisi, charger ses horaires pour cette date
+            if (bookingData.stylist && bookingData.stylist.id) {
+                fetchHoraireForStylist(bookingData.stylist.id, dateValue);
+            }
+            updateSummary();
         }
 
         // Charger les coiffeurs
@@ -1354,83 +1396,102 @@
             const loading = document.getElementById('loadingTime');
             const selection = document.getElementById('timeSelection');
 
-            loading.style.display = 'block';
-            selection.style.display = 'none';
+            if (loading) loading.style.display = 'block';
+            if (selection) { selection.innerHTML = ''; selection.style.display = 'none'; }
 
             setTimeout(() => {
-                generateTimes();
-                loading.style.display = 'none';
-                selection.style.display = 'grid';
-            }, 800);
+                if (bookingData.stylist && bookingData.date && bookingData.stylist.id) {
+                    fetchHoraireForStylist(bookingData.stylist.id, bookingData.date.value);
+                } else {
+                    generateTimes([]); // affichera "Aucun créneau..."
+                    if (loading) loading.style.display = 'none';
+                    if (selection) selection.style.display = 'grid';
+                }
+            }, 200);
         }
 
-        // Générer les créneaux horaires
-        function generateTimes() {
+        // Générer les créneaux horaires (version dynamique)
+        function generateTimes(times = []) {
             const timeSelection = document.getElementById('timeSelection');
+            const noTimeMessage = document.getElementById('noTimeMessage');
             timeSelection.innerHTML = '';
+            if (noTimeMessage) noTimeMessage.style.display = 'none';
 
-            const times = [
-                '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-                '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-                '17:00', '17:30', '18:00', '18:30'
-            ];
+            if (!Array.isArray(times) || times.length === 0) {
+                if (noTimeMessage) {
+                    noTimeMessage.style.display = 'block';
+                    timeSelection.style.display = 'none';
+                } else {
+                    timeSelection.innerHTML = '<div class="empty-state">Aucun créneau disponible pour cette date.</div>';
+                    timeSelection.style.display = 'grid';
+                }
+                return;
+            }
 
             times.forEach((time) => {
-                const isDisabled = Math.random() < 0.2; // 20% de chance d'être occupé
-
                 const timeOption = document.createElement('div');
-                timeOption.className = `time-option ${isDisabled ? 'disabled' : ''}`;
+                timeOption.className = 'time-option';
                 timeOption.setAttribute('data-time', time);
                 timeOption.textContent = time;
-
-                if (!isDisabled) {
-                    timeOption.onclick = () => selectTime(time);
-                }
-
+                timeOption.onclick = () => selectTime(time);
                 timeSelection.appendChild(timeOption);
             });
+
+            timeSelection.style.display = 'grid';
         }
 
-        // Mettre à jour le résumé
-        function updateSummary() {
-            document.getElementById('summaryService').textContent =
-                `${bookingData.service.name} (${bookingData.service.price})`;
-            document.getElementById('summaryStylist').textContent = bookingData.stylist.name;
-            document.getElementById('summaryDate').textContent = bookingData.date.display;
-            document.getElementById('summaryTime').textContent = bookingData.time;
-            document.getElementById('summaryPrice').textContent = bookingData.service.price;
+        // Sélectionne un créneau (met à jour bookingData et l'UI)
+        function selectTime(time) {
+            bookingData.time = time;
+
+            document.querySelectorAll('.time-option').forEach(el => el.classList.remove('selected'));
+            const el = document.querySelector(`.time-option[data-time="${time}"]`);
+            if (el) el.classList.add('selected');
+
+            updateNavigationButtons();
+            updateSummary();
         }
 
-        // Confirmer la réservation
-        function confirmBooking() {
-            const confirmBtn = document.getElementById('confirmBtn');
-            const originalText = confirmBtn.innerHTML;
+        // Récupère les horaires côté serveur et appelle generateTimes()
+        async function fetchHoraireForStylist(stylistId, date) {
+            const token = document.querySelector('input[name="_token"]')?.value || '';
+            const serviceDuration = parseInt(bookingData.service?.duration || 60, 10);
+            const loading = document.getElementById('loadingTime');
+            const selection = document.getElementById('timeSelection');
 
-            confirmBtn.innerHTML = '<div style="width: 20px; height: 20px; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>';
-            confirmBtn.disabled = true;
+            if (loading) loading.style.display = 'block';
+            if (selection) { selection.innerHTML = ''; selection.style.display = 'none'; }
 
-
-            document.getElementById('service_id').value = bookingData.service.id;
-            document.getElementById('stylist_id').value = bookingData.stylist.id;
-            document.getElementById('date').value = bookingData.date.value;
-            document.getElementById('time').value = bookingData.time;
-
-
-            // Soumettre le formulaire au serveur
-            // les champs hidden sont déjà remplis ci-dessus
-            document.getElementById('bookingForm').submit();
+            try {
+                const res = await fetch('{{ route("horaire.hours") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                    body: JSON.stringify({ stylist_id: stylistId, date: date, service_duration: serviceDuration })
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                const times = data.times || [];
+                generateTimes(times);
+            } catch (err) {
+                console.error(err);
+                if (selection) selection.innerHTML = '<div class="empty-state">Erreur lors de la récupération des horaires.</div>';
+            } finally {
+                if (loading) loading.style.display = 'none';
+                if (selection) selection.style.display = 'grid';
+            }
         }
 
         // Initialiser les événements
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Événements pour les sélections de services dans le popup
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 if (e.target.closest('.service-option')) {
                     const option = e.target.closest('.service-option');
                     const serviceId = option.getAttribute('data-service');
                     const serviceName = option.getAttribute('data-name');
                     const servicePrice = option.getAttribute('data-price');
-                    selectService(serviceId, serviceName, servicePrice);
+                    const serviceDuration = option.getAttribute('data-duration') || 60;
+                    selectService(serviceId, serviceName, servicePrice, serviceDuration);
                 }
 
                 if (e.target.closest('.stylist-option')) {
@@ -1447,14 +1508,14 @@
             });
 
             // Fermeture en cliquant sur l'overlay
-            document.getElementById('bookingOverlay').addEventListener('click', function(e) {
+            document.getElementById('bookingOverlay').addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeBooking();
                 }
             });
 
             // Fermer avec Escape
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && document.getElementById('bookingOverlay').style.display === 'flex') {
                     closeBooking();
                 }
@@ -1462,7 +1523,7 @@
 
             // Animation des boutons de réservation
             document.querySelectorAll('.btn-book').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function () {
                     this.style.transform = 'scale(0.95)';
                     setTimeout(() => {
                         this.style.transform = 'scale(1)';
@@ -1526,10 +1587,32 @@
                     selection.innerHTML = '<div class="empty-state">Erreur lors de la récupération des jours.</div>';
                 }
             }
-
-            // Initialisation
-            updateNavigationButtons();
         });
+
+        // Met à jour le résumé dans l'étape 5
+        function updateSummary() {
+            document.getElementById('summaryService').textContent = bookingData.service?.name || '-';
+            document.getElementById('summaryStylist').textContent = bookingData.stylist?.name || '-';
+            document.getElementById('summaryDate').textContent = bookingData.date?.display || '-';
+            document.getElementById('summaryTime').textContent = bookingData.time || '-';
+            document.getElementById('summaryPrice').textContent = bookingData.service?.price ? bookingData.service.price + ' DT' : '-';
+        }
+
+        // Confirme et soumet la réservation (remplit le formulaire caché)
+        function confirmBooking() {
+            if (!validateCurrentStep()) {
+                alert('Sélection incomplète — vérifiez toutes les étapes.');
+                return;
+            }
+            // Remplir inputs cachés
+            document.getElementById('service_id').value = bookingData.service?.id || '';
+            document.getElementById('stylist_id').value = bookingData.stylist?.id || '';
+            document.getElementById('date').value = bookingData.date?.value || '';
+            document.getElementById('time').value = bookingData.time || '';
+
+            // soumettre le formulaire
+            document.getElementById('bookingForm').submit();
+        }
     </script>
 </body>
 

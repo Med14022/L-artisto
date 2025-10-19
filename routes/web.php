@@ -3,6 +3,7 @@
 use App\Http\Controllers\admin\ServiceController;
 use App\Http\Controllers\client\Dashboard;
 use App\Http\Controllers\client\DashboardController;
+use App\Http\Controllers\Coiffeur\CoifDashboardController;
 use App\Http\Controllers\HoraireController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -42,5 +43,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::post('/reservation', [DashboardController::class, 'store'])
     ->middleware('auth') // si tu veux protéger l'accès
     ->name('reservation');
+
+Route::get('/coifdash', [CoifDashboardController::class, 'index'])->name('coifdash');
 
 require __DIR__ . '/auth.php';

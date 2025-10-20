@@ -46,4 +46,6 @@ Route::post('/reservation', [DashboardController::class, 'store'])
 
 Route::get('/coifdash', [CoifDashboardController::class, 'index'])->name('coifdash');
 
+Route::post('/coiffeur/rdv_par_date', [CoifDashboardController::class, 'rdv_par_date']);
+
 require __DIR__ . '/auth.php';

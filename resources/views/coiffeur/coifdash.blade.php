@@ -32,7 +32,25 @@
     @media (max-width:900px){ .grid{grid-template-columns:1fr} }
 
     /* appointments list / calendar-like */
-    .appts{padding:14px;border-radius:12px; background:var(--muted); min-height:320px;}
+    .appts{
+      padding:14px;
+      border-radius:12px;
+      background:var(--muted);
+      min-height:320px;
+
+      /* 🔥 Nouvelle partie ajoutée 🔥 */
+      max-height: 420px;          /* limite d’environ 4 rendez-vous visibles */
+      overflow-y: auto;           /* scroll vertical activé */
+      scrollbar-width: thin;      /* pour Firefox */
+    }
+    .appts::-webkit-scrollbar{
+      width:6px;
+    }
+    .appts::-webkit-scrollbar-thumb{
+      background:rgba(0,0,0,0.25);
+      border-radius:10px;
+    }
+
     .appts .section-title{font-weight:700;margin-bottom:12px}
     .appt{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:#fff;margin-bottom:10px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
     .appt .time{width:64px;font-weight:700;color:var(--gold)}
@@ -48,7 +66,7 @@
     .today-box{background:#fff;border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
     .today-title{font-weight:700;margin-bottom:8px}
     .small-cal{display:flex;gap:8px;flex-wrap:wrap}
-    .cal-item{width:72px;height:72px;border-radius:10px;background:linear-gradient(180deg,#fff,#fafafa);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.03);font-weight:700}
+    .cal-item{width:72px;height:72px;border-radius:10px;background:linear-gradient(180deg,#fff,#fafafa);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,0.1);font-weight:700}
     .cal-item.today{border:2px solid var(--gold)}
 
     /* footer actions */
@@ -58,66 +76,48 @@
     /* completed state */
     .appt.completed{opacity:.6;text-decoration:line-through}
     
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px 0;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #D4AF37, #FFD700, #B8860B);
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .logo {
-            font-size: 28px;
-        }
-        .brand-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--dark);
-            margin: 0;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .welcome-text {
-            font-size: 16px;
-            color: var(--dark);
-        }
-        .logout-btn {
-            background: var(--gold);
-            color: #111;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-        
-        
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 15px 0;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #D4AF37, #FFD700, #B8860B);
+    }
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo { font-size: 28px; }
+    .brand-name { font-size: 24px; font-weight: bold; color: var(--dark); margin: 0; }
+    .user-info { display: flex; align-items: center; gap: 15px; }
+    .welcome-text { font-size: 16px; color: var(--dark); }
+    .logout-btn {
+      background: var(--gold);
+      color: #111;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body >
@@ -156,11 +156,11 @@
 
       <div class="stats">
         <div class="stat">
-          <div class="num">8</div>
+          <div class="num">{{ $rdv_enattente->where('date', now()->toDateString())->count() }}</div>
           <div class="label">Rendez‑vous aujourd'hui</div>
         </div>
         <div class="stat">
-          <div class="num">5</div>
+          <div class="num">{{ $rdv_terminer->count() }}</div>
           <div class="label">Rendez‑vous terminés</div>
         </div>
         <div class="stat">
@@ -176,6 +176,24 @@
             <div class="section-title">Rendez‑vous d'aujourd'hui</div>
 
             <!-- static example appointments -->
+            @foreach ($rdv_enattente as $rdv)
+              <div class="appt" data-id="{{ $rdv->id }}">
+                <div class="time">{{ \Carbon\Carbon::parse($rdv->date_rdv)->format('H:i') }}</div>
+                <div class="meta">
+                  <div class="client">{{ $rdv->client->name }}</div>
+                  <div class="service">@foreach ($rdv->services as $service)
+                    {{ $service->name }} — {{ $service->duration }} min<br>
+                  @endforeach
+                  </div>
+                  <div class="muted">Téléphone: {{ $rdv->client->phone }}</div>
+                </div>
+                <div class="actions">
+                  <button class="btn btn-ghost" onclick="markDone(this,{{ $rdv->id }})">Terminé</button>
+                  <button class="btn btn-primary" onclick="openTake({{ $rdv->id }})">Voir</button>
+                </div>
+              </div>
+            @endforeach
+
             <div class="appt" data-id="1">
               <div class="time">09:00</div>
               <div class="meta">
@@ -240,13 +258,15 @@
         <!-- right: petit calendrier + résumé -->
         <aside>
           <div class="today-box">
-            <div class="today-title">Aujourd'hui — mini calendrier</div>
+            <div class="today-title">Mini calendrier</div>
             <div class="small-cal" style="margin-bottom:10px">
-              <div class="cal-item">13<br><span style="font-size:12px;color:#888">oct.</span></div>
-              <div class="cal-item">14<br><span style="font-size:12px;color:#888">oct.</span></div>
-              <div class="cal-item today">15<br><span style="font-size:12px;color:#888">oct.</span></div>
-              <div class="cal-item">16<br><span style="font-size:12px;color:#888">oct.</span></div>
-              <div class="cal-item">17<br><span style="font-size:12px;color:#888">oct.</span></div>
+              @for ($i=0;$i<14;$i++)
+              <?php $day = now()->addDay($i) ; ?>
+              <button style="border:0px" class="cal-item " id={{ $day }}>{{ $day->format('d') }}<br><span style="font-size:12px;color:#888">{{ $day->format('M') }}</span></button>
+              @endfor
+              
+              <button  class="cal-item today" style="border:0px">15<br><span style="font-size:12px;color:#888">oct.</span></button>
+              
             </div>
 
             <div style="font-weight:700;margin-bottom:8px">Prochains rendez‑vous</div>

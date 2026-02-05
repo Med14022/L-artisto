@@ -5,6 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property string $date
+ * @property string $heure
+ * @property string $etat
+ * @property int $id_client
+ * @property int $id_coiffeur
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ */
 class RendezVous extends Model
 {
     use HasFactory;

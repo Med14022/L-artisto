@@ -34,7 +34,8 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::post('/horaire/days', [DashboardController::class, 'getWorkingDays'])->name('horaire.days');
-Route::post('/horaire/hours', [HoraireController::class, 'hours'])->name('horaire.hours');
+Route::post('coiffeur/days', [HoraireController::class, 'days'])->name('horaire.days');
+Route::post('coiffeur/hours', [HoraireController::class, 'hours'])->name('horaire.hours');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth') // si tu veux protéger l'accès
@@ -47,5 +48,8 @@ Route::post('/reservation', [DashboardController::class, 'store'])
 Route::get('/coifdash', [CoifDashboardController::class, 'index'])->name('coifdash');
 
 Route::post('/coiffeur/rdv_par_date', [CoifDashboardController::class, 'rdv_par_date']);
+
+Route::post('coiffeur/rdv_guest', [CoifDashboardController::class, 'storeGuest'])
+    ->name('coifdash.rdv_guest');
 
 require __DIR__ . '/auth.php';

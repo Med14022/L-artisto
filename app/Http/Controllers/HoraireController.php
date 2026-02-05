@@ -6,7 +6,6 @@ use App\Models\horaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-
 class HoraireController extends Controller
 {
     /**
@@ -65,52 +64,60 @@ class HoraireController extends Controller
         //
     }
 
+    /**
+     * Retourne les jours (dates) de travail pour un coiffeur (stylist)
+     * Attendu : POST { stylist_id }
+     * Réponse : { days: ["2025-11-09","2025-11-10", ...] }
+     */
+    public function days(Request $request)
+    {
+        $request->validate(['stylist_id' => 'required|integer']);
+
+        try {
+            $stylistId = $request->input('stylist_id');
+            $days = Horaire::where('stylist_id', $stylistId)
+                ->select('date')
+                ->distinct()
+                ->orderBy('date')
+                ->pluck('date')
+                ->toArray();
+
+            return response()->json(['days' => $days], 200);
+        } catch (\Throwable $e) {
+            \Log::error('horaire.days error: ' . $e->getMessage());
+            return response()->json(['message' => 'Erreur serveur'], 500);
+        }
+    }
+
+    /**
+     * Retourne les créneaux disponibles pour un coiffeur et une date
+     * Attendu : POST { stylist_id, date, service_duration? }
+     * Réponse : { times: ["09:00","09:30", ...] }
+     */
     public function hours(Request $request)
     {
         $request->validate([
             'stylist_id' => 'required|integer',
             'date' => 'required|date',
-            'service_duration' => 'nullable|integer|min:1' // minutes
+            'service_duration' => 'nullable|integer'
         ]);
 
-        $stylistId = $request->input('stylist_id');
-        $date = $request->input('date');
-        $serviceDuration = (int) $request->input('service_duration', 30); // default 30 minutes
-        $step = 30; // pas entre départs (30 minutes)
+        try {
+            $stylistId = $request->input('stylist_id');
+            $date = $request->input('date');
 
-        $horaire = DB::table('horaires')
-            ->where('id_coiffeur', $stylistId)
-            ->where('date', $date)
-            ->first();
+            $times = Horaire::where('stylist_id', $stylistId)
+                ->where('date', $date)
+                ->orderBy('heure') // ou 'time' selon ta colonne
+                ->pluck('heure')   // ajuste selon le nom de colonne
+                ->unique()
+                ->values()
+                ->toArray();
 
-        if (!$horaire || empty($horaire->horaire_jour)) {
-            return response()->json(['times' => []]);
+            return response()->json(['times' => $times], 200);
+        } catch (\Throwable $e) {
+            \Log::error('horaire.hours error: ' . $e->getMessage());
+            return response()->json(['message' => 'Erreur serveur'], 500);
         }
-
-        $intervals = explode('/', $horaire->horaire_jour); // ex: "10:00-12:00/14:00-17:00"
-        $slots = [];
-
-        foreach ($intervals as $interval) {
-            $parts = explode('-', $interval);
-            if (count($parts) !== 2)
-                continue;
-
-            try {
-                $start = Carbon::createFromFormat('H:i', trim($parts[0]));
-                $end = Carbon::createFromFormat('H:i', trim($parts[1]));
-            } catch (\Exception $e) {
-                continue;
-            }
-
-            // tant que start + serviceDuration <= end
-            while ($start->copy()->addMinutes($serviceDuration)->lte($end)) {
-                $slots[] = $start->format('H:i');
-                $start->addMinutes($step);
-            }
-        }
-
-        // Optionnel : filtrer les créneaux déjà réservés ici
-
-        return response()->json(['times' => array_values(array_unique($slots))]);
     }
 }

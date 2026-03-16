@@ -48,9 +48,11 @@ class DashboardController extends Controller
         ]);
 
         // Vérifier si le créneau horaire est déjà réservé
+        $normalizedTime = Carbon::parse($request->time)->format('H:i');
+
         $existingAppointment = RendezVous::where('id_coiffeur', $request->stylist_id)
             ->where('date', $request->date)
-            ->where('heure', $request->time)
+            ->where('heure', $normalizedTime)
             ->first();
 
         if ($existingAppointment) {
@@ -62,7 +64,7 @@ class DashboardController extends Controller
         $rendezVous->id_client = Auth::user()->id;
         $rendezVous->id_coiffeur = $request->stylist_id;
         $rendezVous->date = $request->date;
-        $rendezVous->heure = $request->time;
+        $rendezVous->heure = $normalizedTime;
         $rendezVous->etat = 'en attente';
         $rendezVous->save();
 
@@ -75,7 +77,7 @@ class DashboardController extends Controller
         $duration = $service ? (int) $service->duration : 0;
 
         // Calculer l'heure de fin du rendez-vous
-        $startTime = Carbon::createFromFormat('H:i', $request->time);
+        $startTime = Carbon::parse($normalizedTime);
         $endTime = (clone $startTime)->addMinutes($duration);
 
         // Récupère le record Horaire pour ce coiffeur et cette date

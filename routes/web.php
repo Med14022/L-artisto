@@ -34,7 +34,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::post('/horaire/days', [DashboardController::class, 'getWorkingDays'])->name('horaire.days');
-Route::post('coiffeur/days', [HoraireController::class, 'days'])->name('horaire.days');
+Route::post('coiffeur/days', [HoraireController::class, 'days'])->name('horaire.coiffeur-days');
 Route::post('coiffeur/hours', [HoraireController::class, 'hours'])->name('horaire.hours');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])

@@ -19,6 +19,6 @@ class Horaire extends Model
 
     public function coiffeur()
     {
-        return $this->belongsTo(User::class, 'id');
+        return $this->belongsTo(User::class, 'id_coiffeur');
     }
 }

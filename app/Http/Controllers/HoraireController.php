@@ -75,7 +75,7 @@ class HoraireController extends Controller
 
         try {
             $stylistId = $request->input('stylist_id');
-            $days = Horaire::where('stylist_id', $stylistId)
+            $days = Horaire::where('id_coiffeur', $stylistId)
                 ->select('date')
                 ->distinct()
                 ->orderBy('date')
@@ -105,15 +105,40 @@ class HoraireController extends Controller
         try {
             $stylistId = $request->input('stylist_id');
             $date = $request->input('date');
+            $serviceDuration = $request->input('service_duration');
 
-            $times = Horaire::where('stylist_id', $stylistId)
+            $horaire = Horaire::where('id_coiffeur', $stylistId)
                 ->where('date', $date)
-                ->orderBy('heure') // ou 'time' selon ta colonne
-                ->pluck('heure')   // ajuste selon le nom de colonne
-                ->unique()
-                ->values()
-                ->toArray();
-
+                ->first();
+            if (!$horaire || empty($horaire->horaire_jour)) {
+                return response()->json(['times' => []], 200);
+            }
+            $slots = [];
+            foreach (explode('/', $horaire->horaire_jour) as $period) {
+                $period = trim($period);
+                if (!$period)
+                    continue;
+                if (strpos($period, '-') === false)
+                    continue;
+                [$start, $end] = array_map('trim', explode('-', $period));
+                try {
+                    $startMinutes = Carbon::createFromFormat('H:i', $start)->hour * 60 + Carbon::createFromFormat('H:i', $start)->minute;
+                    $endMinutes = Carbon::createFromFormat('H:i', $end)->hour * 60 + Carbon::createFromFormat('H:i', $end)->minute;
+                } catch (\Throwable $ex) {
+                    continue;
+                }
+                for ($m = $startMinutes; $m + 1 <= $endMinutes; $m += 30) {
+                    $time = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+                    if ($serviceDuration && is_numeric($serviceDuration)) {
+                        $endAppt = $m + (int) $serviceDuration;
+                        if ($endAppt > $endMinutes) {
+                            continue;
+                        }
+                    }
+                    $slots[] = $time;
+                }
+            }
+            $times = array_values(array_unique($slots));
             return response()->json(['times' => $times], 200);
         } catch (\Throwable $e) {
             \Log::error('horaire.hours error: ' . $e->getMessage());

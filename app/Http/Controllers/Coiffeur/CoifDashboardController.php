@@ -126,30 +126,74 @@ class CoifDashboardController extends Controller
 
         DB::beginTransaction();
         try {
-            // Create a new client user (guest) without password
-            $client = new User();
+            // calculate and validate duration
+            $service = Service::find($data['service_id']);
+            $duration = $service ? (int) $service->duration : 0;
+            $normalizedHeure = Carbon::parse($data['heure'])->format('H:i');
+            $startTime = Carbon::createFromFormat('H:i', $normalizedHeure);
+            $endTime = (clone $startTime)->addMinutes($duration);
+
+            // Check horaire availability before creating RDV
+            $horaire = Horaire::where('id_coiffeur', $data['coiffeur_id'])
+                ->where('date', $data['date'])
+                ->first();
+
+            if (!$horaire || empty($horaire->horaire_jour)) {
+                return response()->json(['success' => false, 'message' => 'Aucun horaire disponible pour cette date.'], 422);
+            }
+
+            $segments = array_filter(array_map('trim', explode('/', $horaire->horaire_jour)));
+            $isValid = false;
+            foreach ($segments as $seg) {
+                if (strpos($seg, '-') === false) {
+                    continue;
+                }
+                [$segStartStr, $segEndStr] = array_map('trim', explode('-', $seg));
+                $segStart = Carbon::createFromFormat('H:i', $segStartStr);
+                $segEnd = Carbon::createFromFormat('H:i', $segEndStr);
+
+                if ($startTime->greaterThanOrEqualTo($segStart) && $endTime->lessThanOrEqualTo($segEnd)) {
+                    $isValid = true;
+                    break;
+                }
+            }
+
+            if (!$isValid) {
+                return response()->json(['success' => false, 'message' => 'Le créneau choisi n\'est pas disponible pour ce service.'], 422);
+            }
+
+            // Create or reuse client user by email (avoid duplicate email error)
+            $clientEmail = $data['client_email'] ?? null;
+            if ($clientEmail) {
+                $client = User::where('email', $clientEmail)->first();
+            } else {
+                $client = null;
+            }
+
+            if (!$client) {
+                $client = new User();
+                $client->email = $clientEmail ?? ('guest_' . time() . '@artisto.local');
+                $client->password = bcrypt('guest');
+            }
+
             $client->name = $data['client_name'];
             $client->phone = $data['client_phone'];
-            $client->email = $data['client_email'] ?? ('guest_' . time() . '@artisto.local');
             $client->address = $data['client_address'] ?? '';
-            $client->password = bcrypt('guest'); // temporary password
             $client->role = 'client';
             $client->save();
 
-            // Now create the appointment with the client ID
             $rdv = new RendezVous();
             $rdv->date = $data['date'];
-            $rdv->heure = $data['heure'];
+            $rdv->heure = $normalizedHeure;
             $rdv->etat = 'en attente';
             $rdv->id_client = $client->id;
             $rdv->id_coiffeur = $data['coiffeur_id'];
             $rdv->save();
 
-            // attach service: prefer relation, fallback insert pivot
+            // attach service
             if (method_exists($rdv, 'services')) {
                 $rdv->services()->attach($data['service_id']);
             } else {
-                // fallback pivot name: rendez_vous_service with rendez_vous_id
                 DB::table('rendez_vous_service')->insert([
                     'rendez_vous_id' => $rdv->id,
                     'service_id' => $data['service_id'],
@@ -158,70 +202,42 @@ class CoifDashboardController extends Controller
                 ]);
             }
 
-            // Update horaire_jour to mark the time slot as booked
-            $service = Service::find($data['service_id']);
-            $duration = $service ? (int) $service->duration : 0;
+            // remove slot from horaire_jour
+            $newSegments = [];
+            foreach ($segments as $seg) {
+                if (strpos($seg, '-') === false) {
+                    continue;
+                }
+                [$segStartStr, $segEndStr] = array_map('trim', explode('-', $seg));
+                $segStart = Carbon::createFromFormat('H:i', $segStartStr);
+                $segEnd = Carbon::createFromFormat('H:i', $segEndStr);
 
-            // Calculate appointment end time
-            $startTime = Carbon::createFromFormat('H:i', $data['heure']);
-            $endTime = (clone $startTime)->addMinutes($duration);
-
-            // Get the Horaire record for this barber and date
-            $horaire = Horaire::where('id_coiffeur', $data['coiffeur_id'])
-                ->where('date', $data['date'])
-                ->first();
-
-            if ($horaire && !empty($horaire->horaire_jour)) {
-                $horaire_jour = $horaire->horaire_jour; // ex: "10:00-14:00/15:00-21:00"
-
-                $segments = array_filter(array_map('trim', explode('/', $horaire_jour)));
-                $newSegments = [];
-
-                foreach ($segments as $seg) {
-                    $parts = array_map('trim', explode('-', $seg));
-                    if (count($parts) !== 2) {
-                        continue;
-                    }
-
-                    $segStart = Carbon::createFromFormat('H:i', $parts[0]);
-                    $segEnd = Carbon::createFromFormat('H:i', $parts[1]);
-
-                    // Determine the intersection between [segStart, segEnd] and [startTime, endTime]
-                    $overlapStart = $segStart->greaterThan($startTime) ? $segStart : $startTime;
-                    $overlapEnd = $segEnd->lessThan($endTime) ? $segEnd : $endTime;
-
-                    // No intersection: keep the segment as-is
-                    if ($overlapStart->greaterThanOrEqualTo($overlapEnd)) {
-                        $newSegments[] = $segStart->format('H:i') . '-' . $segEnd->format('H:i');
-                        continue;
-                    }
-
-                    // There is overlap: remove the overlapping portion
-                    // Keep the part before the appointment if it exists
-                    if ($segStart->lessThan($overlapStart)) {
-                        $newSegments[] = $segStart->format('H:i') . '-' . $overlapStart->format('H:i');
-                    }
-
-                    // Keep the part after the appointment if it exists
-                    if ($overlapEnd->lessThan($segEnd)) {
-                        $newSegments[] = $overlapEnd->format('H:i') . '-' . $segEnd->format('H:i');
-                    }
+                // no overlap
+                if ($endTime->lessThanOrEqualTo($segStart) || $startTime->greaterThanOrEqualTo($segEnd)) {
+                    $newSegments[] = $segStart->format('H:i') . '-' . $segEnd->format('H:i');
+                    continue;
                 }
 
-                // Rebuild the string without the booked time slots
-                $updatedHoraire = implode('/', array_filter($newSegments));
-
-                // Save the new horaire
-                $horaire->horaire_jour = $updatedHoraire;
-                $horaire->save();
+                // before part
+                if ($startTime->greaterThan($segStart)) {
+                    $newSegments[] = $segStart->format('H:i') . '-' . $startTime->format('H:i');
+                }
+                // after part
+                if ($endTime->lessThan($segEnd)) {
+                    $newSegments[] = $endTime->format('H:i') . '-' . $segEnd->format('H:i');
+                }
             }
+
+            $horaire->horaire_jour = implode('/', array_filter($newSegments));
+            $horaire->save();
 
             DB::commit();
             return response()->json(['success' => true, 'rdv_id' => $rdv->id], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('storeGuest error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Erreur serveur'], 500);
+            Log::error('storeGuest error', ['exception' => $e]);
+            $msg = config('app.debug') ? $e->getMessage() : 'Erreur serveur';
+            return response()->json(['success' => false, 'message' => $msg], 500);
         }
     }
 }

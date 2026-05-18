@@ -50,14 +50,10 @@ Route::middleware(['auth', 'isCoiffeur'])->prefix('coiffeur')->name('coiffeur.')
     Route::patch('/rendez-vous/{rendezVous}/status', [CoiffeurDashboardController::class, 'updateStatus'])->name('rendez-vous.update-status');
 });
 
-// ─── Routes Legacy (CoifDash) ─────────────────────────────────────────────────
+// ─── Routes Legacy (CoifDash / Horaire) ───────────────────────────────────────
 Route::post('/horaire/days', [DashboardController::class, 'getWorkingDays'])->name('horaire.days');
 Route::post('coiffeur/days', [HoraireController::class, 'days'])->name('horaire.coiffeur-days');
 Route::post('coiffeur/hours', [HoraireController::class, 'hours'])->name('horaire.hours');
-
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth')
-    ->name('home');
 
 Route::post('/reservation', [DashboardController::class, 'store'])
     ->middleware('auth')

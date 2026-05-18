@@ -132,7 +132,7 @@ class DashboardController extends Controller
         }
 
 
-        return redirect()->route('home')->with('success', 'Rendez-vous réservé avec succès !');
+        return redirect()->route('dashboard')->with('success', 'Rendez-vous réservé avec succès !');
     }
 
     /**

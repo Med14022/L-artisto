@@ -4,63 +4,59 @@ namespace App\Http\Controllers;
 
 use App\Models\RendezVous;
 use App\Http\Requests\StoreRendezVousRequest;
-use App\Http\Requests\UpdateRendezVousRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RendezVousController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreRendezVousRequest $request)
     {
-        //
+        $rdv = RendezVous::create([
+            'date'        => $request->date,
+            'heure'       => $request->heure . ':00',
+            'etat'        => 'en attente',
+            'id_client'   => Auth::id(),
+            'id_coiffeur' => $request->id_coiffeur,
+        ]);
+
+        $rdv->services()->attach($request->service_id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre rendez-vous a été créé avec succès !',
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(RendezVous $rendezVous)
+    public function availableTimes(Request $request)
     {
-        //
+        $request->validate([
+            'coiffeur_id' => 'required|exists:users,id',
+            'date'        => 'required|date',
+        ]);
+
+        $booked = RendezVous::where('id_coiffeur', $request->coiffeur_id)
+            ->where('date', $request->date)
+            ->whereIn('etat', ['en attente', 'confirmé'])
+            ->pluck('heure')
+            ->map(fn($h) => substr($h, 0, 5))
+            ->toArray();
+
+        return response()->json($booked);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(RendezVous $rendezVous)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateRendezVousRequest $request, RendezVous $rendezVous)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(RendezVous $rendezVous)
     {
-        //
+        if ($rendezVous->id_client !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Non autorisé.'], 403);
+        }
+
+        if (!in_array($rendezVous->etat, ['en attente'])) {
+            return response()->json(['success' => false, 'message' => 'Impossible d\'annuler ce rendez-vous.'], 422);
+        }
+
+        $rendezVous->services()->detach();
+        $rendezVous->delete();
+
+        return response()->json(['success' => true, 'message' => 'Rendez-vous annulé.']);
     }
 }

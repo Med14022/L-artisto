@@ -1,48 +1,66 @@
 <?php
 
 use App\Http\Controllers\admin\ServiceController;
-use App\Http\Controllers\client\Dashboard;
+use App\Http\Controllers\admin\AdminDashboardController;
+use App\Http\Controllers\admin\AdminRendezVousController;
+use App\Http\Controllers\coiffeur\CoiffeurDashboardController;
 use App\Http\Controllers\client\DashboardController;
 use App\Http\Controllers\Coiffeur\CoifDashboardController;
 use App\Http\Controllers\HoraireController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RendezVousController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
+// Page d'accueil
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// ─── Routes Client ───────────────────────────────────────────────────────────
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Rendez-vous
+    Route::post('/rendez-vous', [RendezVousController::class, 'store'])->name('rendez-vous.store');
+    Route::delete('/rendez-vous/{rendezVous}', [RendezVousController::class, 'destroy'])->name('rendez-vous.destroy');
+    Route::get('/rendez-vous/available-times', [RendezVousController::class, 'availableTimes'])->name('rendez-vous.available-times');
+});
+
+// ─── Routes Profil ───────────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// ─── Routes Admin ─────────────────────────────────────────────────────────────
+Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::resource('services', ServiceController::class);
+
+    // Gestion des rendez-vous
+    Route::get('/rendez-vous', [AdminRendezVousController::class, 'index'])->name('rendez-vous.index');
+    Route::patch('/rendez-vous/{rendezVous}/status', [AdminRendezVousController::class, 'updateStatus'])->name('rendez-vous.update-status');
+    Route::delete('/rendez-vous/{rendezVous}', [AdminRendezVousController::class, 'destroy'])->name('rendez-vous.destroy');
+});
+
+// ─── Routes Coiffeur ──────────────────────────────────────────────────────────
+Route::middleware(['auth', 'isCoiffeur'])->prefix('coiffeur')->name('coiffeur.')->group(function () {
+    Route::get('/dashboard', [CoiffeurDashboardController::class, 'index'])->name('dashboard');
+    Route::patch('/rendez-vous/{rendezVous}/status', [CoiffeurDashboardController::class, 'updateStatus'])->name('rendez-vous.update-status');
+});
+
+// ─── Routes Legacy (CoifDash) ─────────────────────────────────────────────────
 Route::post('/horaire/days', [DashboardController::class, 'getWorkingDays'])->name('horaire.days');
 Route::post('coiffeur/days', [HoraireController::class, 'days'])->name('horaire.coiffeur-days');
 Route::post('coiffeur/hours', [HoraireController::class, 'hours'])->name('horaire.hours');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth') // si tu veux protéger l'accès
+    ->middleware('auth')
     ->name('home');
 
 Route::post('/reservation', [DashboardController::class, 'store'])
-    ->middleware('auth') // si tu veux protéger l'accès
+    ->middleware('auth')
     ->name('reservation');
 
 Route::get('/coifdash', [CoifDashboardController::class, 'index'])->name('coifdash');

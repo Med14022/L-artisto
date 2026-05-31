@@ -40,6 +40,8 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 
     // Gestion des rendez-vous
     Route::get('/rendez-vous', [AdminRendezVousController::class, 'index'])->name('rendez-vous.index');
+    Route::get('/rendez-vous/create', [AdminRendezVousController::class, 'create'])->name('rendez-vous.create');
+    Route::post('/rendez-vous', [AdminRendezVousController::class, 'store'])->name('rendez-vous.store');
     Route::patch('/rendez-vous/{rendezVous}/status', [AdminRendezVousController::class, 'updateStatus'])->name('rendez-vous.update-status');
     Route::delete('/rendez-vous/{rendezVous}', [AdminRendezVousController::class, 'destroy'])->name('rendez-vous.destroy');
 });

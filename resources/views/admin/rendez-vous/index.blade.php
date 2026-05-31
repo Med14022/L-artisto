@@ -3,6 +3,10 @@
 @section('title', 'Rendez-vous')
 @section('page-title', 'Gestion des Rendez-vous')
 
+@section('topbar-actions')
+    <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-gold btn-sm">+ Nouveau RDV</a>
+@endsection
+
 @section('content')
 
 <div class="card">

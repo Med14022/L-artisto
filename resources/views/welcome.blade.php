@@ -310,8 +310,9 @@
                     <a href="{{ url('/dashboard') }}" class="nav-link nav-link-ghost">Mon espace</a>
                 @else
                     <a href="{{ route('login') }}"    class="nav-link nav-link-ghost">Se connecter</a>
+                    <a href="{{ route('reserver') }}" class="nav-link nav-link-ghost">Réserver sans compte</a>
                     @if(Route::has('register'))
-                        <a href="{{ route('register') }}" class="nav-link nav-link-gold">Réserver →</a>
+                        <a href="{{ route('register') }}" class="nav-link nav-link-gold">Créer un compte →</a>
                     @endif
                 @endauth
             @endif
@@ -335,7 +336,7 @@
             @auth
                 <a href="{{ url('/dashboard') }}" class="cta-primary">Prendre rendez-vous</a>
             @else
-                <a href="{{ route('register') }}" class="cta-primary">Réserver maintenant</a>
+                <a href="{{ route('reserver') }}"  class="cta-primary">Réserver sans compte →</a>
                 <a href="{{ route('login') }}"    class="cta-secondary">J'ai un compte</a>
             @endauth
         </div>
@@ -437,7 +438,7 @@
             @auth
                 <a href="{{ url('/dashboard') }}" class="cta-primary">Réserver une prestation</a>
             @else
-                <a href="{{ route('register') }}" class="cta-primary">Créer un compte & réserver</a>
+                <a href="{{ route('reserver') }}" class="cta-primary">Réserver sans compte →</a>
             @endauth
         </div>
     </div>

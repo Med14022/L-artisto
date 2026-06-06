@@ -16,6 +16,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// ─── Réservation publique (sans compte) ───────────────────────────────────────
+Route::get('/reserver', [\App\Http\Controllers\PublicReservationController::class, 'index'])->name('reserver');
+Route::post('/reserver', [\App\Http\Controllers\PublicReservationController::class, 'store'])->name('reserver.store');
+Route::get('/reserver/merci', [\App\Http\Controllers\PublicReservationController::class, 'confirmation'])->name('reserver.confirmation');
+
 // ─── Routes Client ───────────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

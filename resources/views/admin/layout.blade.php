@@ -257,6 +257,9 @@
         <a href="{{ route('admin.rendez-vous.index') }}" class="nav-link {{ request()->routeIs('admin.rendez-vous*') ? 'active' : '' }}">
             <span class="nav-icon">📅</span> Rendez-vous
         </a>
+        <a href="{{ route('admin.clients.index') }}" class="nav-link {{ request()->routeIs('admin.clients*') ? 'active' : '' }}">
+            <span class="nav-icon">👥</span> Clients
+        </a>
         <div class="nav-label" style="margin-top:16px;">Accès rapide</div>
         <a href="{{ route('dashboard') }}" class="nav-link">
             <span class="nav-icon">👤</span> Vue Client

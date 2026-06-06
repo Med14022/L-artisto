@@ -38,6 +38,10 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::resource('services', ServiceController::class);
 
+    // Gestion des clients
+    Route::get('/clients', [\App\Http\Controllers\admin\AdminClientController::class, 'index'])->name('clients.index');
+    Route::get('/clients/{user}', [\App\Http\Controllers\admin\AdminClientController::class, 'show'])->name('clients.show');
+
     // Gestion des rendez-vous
     Route::get('/rendez-vous', [AdminRendezVousController::class, 'index'])->name('rendez-vous.index');
     Route::get('/rendez-vous/create', [AdminRendezVousController::class, 'create'])->name('rendez-vous.create');

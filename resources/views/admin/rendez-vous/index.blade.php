@@ -4,6 +4,14 @@
 @section('page-title', 'Gestion des Rendez-vous')
 
 @section('topbar-actions')
+    @php $mois = request('mois', now()->format('Y-m')); @endphp
+    <form method="GET" action="{{ route('admin.rendez-vous.index') }}" style="display:flex;align-items:center;gap:8px;">
+        <input type="month" name="mois" value="{{ $mois }}"
+            style="padding:6px 10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;">
+        <button type="submit" class="btn btn-ghost btn-sm">Filtrer</button>
+    </form>
+    <a href="{{ route('admin.export.pdf-mensuel', ['mois' => $mois]) }}" target="_blank" class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;">📄 PDF</a>
+    <a href="{{ route('admin.export.csv', ['mois' => $mois]) }}" class="btn btn-sm" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:#4ade80;">📊 CSV</a>
     <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-gold btn-sm">+ Nouveau RDV</a>
 @endsection
 

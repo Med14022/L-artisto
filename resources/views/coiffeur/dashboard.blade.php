@@ -234,6 +234,20 @@
         </div>
     </div>
 
+    <!-- ── EXPORTS ── -->
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:20px;flex-wrap:wrap;">
+        <a href="{{ route('coiffeur.export.pdf-jour', ['date' => today()->toDateString()]) }}"
+            target="_blank"
+            style="display:flex;align-items:center;gap:6px;padding:9px 18px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;font-family:'Inter',sans-serif;">
+            📄 PDF du jour
+        </a>
+        <a href="{{ route('coiffeur.export.pdf-semaine') }}"
+            target="_blank"
+            style="display:flex;align-items:center;gap:6px;padding:9px 18px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.2);color:var(--gold);border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;font-family:'Inter',sans-serif;">
+            📅 PDF de la semaine
+        </a>
+    </div>
+
     <!-- ── CALENDRIER ── -->
     <div class="section-heading"><span class="dot"></span> Calendrier</div>
     <div class="card" style="margin-bottom:28px;padding:20px 24px;">

@@ -50,6 +50,10 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('/clients', [\App\Http\Controllers\admin\AdminClientController::class, 'index'])->name('clients.index');
     Route::get('/clients/{user}', [\App\Http\Controllers\admin\AdminClientController::class, 'show'])->name('clients.show');
 
+    // Exports
+    Route::get('/export/pdf-mensuel', [\App\Http\Controllers\admin\AdminExportController::class, 'pdfMensuel'])->name('export.pdf-mensuel');
+    Route::get('/export/csv', [\App\Http\Controllers\admin\AdminExportController::class, 'csv'])->name('export.csv');
+
     // Gestion des horaires coiffeurs
     Route::get('/horaires', [\App\Http\Controllers\admin\AdminHoraireController::class, 'index'])->name('horaires.index');
     Route::post('/horaires', [\App\Http\Controllers\admin\AdminHoraireController::class, 'store'])->name('horaires.store');
@@ -68,6 +72,8 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 Route::middleware(['auth', 'isCoiffeur'])->prefix('coiffeur')->name('coiffeur.')->group(function () {
     Route::get('/dashboard', [CoiffeurDashboardController::class, 'index'])->name('dashboard');
     Route::patch('/rendez-vous/{rendezVous}/status', [CoiffeurDashboardController::class, 'updateStatus'])->name('rendez-vous.update-status');
+    Route::get('/export/pdf-jour', [\App\Http\Controllers\coiffeur\CoiffeurExportController::class, 'pdfJour'])->name('export.pdf-jour');
+    Route::get('/export/pdf-semaine', [\App\Http\Controllers\coiffeur\CoiffeurExportController::class, 'pdfSemaine'])->name('export.pdf-semaine');
 });
 
 // ─── Routes Legacy (CoifDash / Horaire) ───────────────────────────────────────

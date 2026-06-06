@@ -69,4 +69,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Horaire::class, 'id_coiffeur');
     }
+
+    public function avisRecus()
+    {
+        return $this->hasMany(Avis::class, 'id_coiffeur');
+    }
 }

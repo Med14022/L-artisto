@@ -751,19 +751,77 @@
         <div class="card" style="margin-bottom:24px;">
             <h2 class="card-title">📋 Historique des Rendez-vous</h2>
             @forelse ($rdvs->filter(fn($r) => $r->etat === 'terminé') as $rdv)
-                <div class="appointment-item">
-                    <div class="appointment-details">
-                        <div class="appointment-date">
-                            {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}
-                            à {{ substr($rdv->heure, 0, 5) }}
+                <div class="appointment-item" style="flex-direction:column;align-items:flex-start;gap:10px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+                        <div class="appointment-details">
+                            <div class="appointment-date">
+                                {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}
+                                à {{ substr($rdv->heure, 0, 5) }}
+                            </div>
+                            <div class="appointment-service">
+                                {{ $rdv->coiffeur->name ?? '' }} —
+                                @foreach ($rdv->services as $service)
+                                    {{ $service->name }}@if (!$loop->last), @endif
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="appointment-service">
-                            @foreach ($rdv->services as $service)
-                                {{ $service->name }}@if (!$loop->last), @endif
-                            @endforeach
-                        </div>
+                        @if($rdv->avis)
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+                                <div style="font-size:18px;letter-spacing:1px;">
+                                    @for($i=1;$i<=5;$i++)
+                                        <span style="color:{{ $i <= $rdv->avis->note ? '#D4AF37' : '#3a3530' }};">★</span>
+                                    @endfor
+                                </div>
+                                @if($rdv->avis->commentaire)
+                                    <span style="font-size:11px;color:var(--text-muted);max-width:200px;text-align:right;font-style:italic;">"{{ Str::limit($rdv->avis->commentaire, 60) }}"</span>
+                                @endif
+                            </div>
+                        @else
+                            <button onclick="toggleAvis({{ $rdv->id }})"
+                                style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.2);color:var(--gold);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;">
+                                ★ Laisser un avis
+                            </button>
+                        @endif
                     </div>
-                    <span class="appointment-status status-completed">Terminé</span>
+
+                    {{-- Formulaire avis (caché par défaut) --}}
+                    @if(!$rdv->avis)
+                    <div id="avis-{{ $rdv->id }}" style="display:none;width:100%;background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:10px;padding:14px 16px;">
+                        <form method="POST" action="{{ route('avis.store') }}">
+                            @csrf
+                            <input type="hidden" name="rendez_vous_id" value="{{ $rdv->id }}">
+
+                            {{-- Étoiles interactives --}}
+                            <div style="margin-bottom:10px;">
+                                <span style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Votre note *</span>
+                                <div class="star-rating" data-rdv="{{ $rdv->id }}">
+                                    @for($i=1;$i<=5;$i++)
+                                    <span class="star" data-val="{{ $i }}"
+                                        style="font-size:28px;cursor:pointer;color:#3a3530;transition:color 0.15s;"
+                                        onmouseover="hoverStars({{ $rdv->id }}, {{ $i }})"
+                                        onmouseout="resetStars({{ $rdv->id }})"
+                                        onclick="selectStar({{ $rdv->id }}, {{ $i }})">★</span>
+                                    @endfor
+                                </div>
+                                <input type="hidden" name="note" id="note-{{ $rdv->id }}" required>
+                            </div>
+
+                            <textarea name="commentaire" placeholder="Commentaire (optionnel)…" rows="2"
+                                style="width:100%;padding:9px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;resize:none;margin-bottom:8px;"></textarea>
+
+                            <div style="display:flex;gap:8px;">
+                                <button type="submit"
+                                    style="padding:8px 20px;background:linear-gradient(135deg,#B8860B,#FFD700);color:#0a0a0a;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">
+                                    Envoyer
+                                </button>
+                                <button type="button" onclick="toggleAvis({{ $rdv->id }})"
+                                    style="padding:8px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text-muted);border-radius:8px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    @endif
                 </div>
             @empty
                 <p class="empty-state">Aucun historique disponible.</p>
@@ -1142,5 +1200,35 @@
             updateNavigationButtons();
         });
     </script>
+
+<script>
+// ── Avis : afficher/cacher formulaire ────────────────────────────────────────
+function toggleAvis(rdvId) {
+    const el = document.getElementById('avis-' + rdvId);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Étoiles interactives ─────────────────────────────────────────────────────
+const selectedStars = {};
+
+function hoverStars(rdvId, val) {
+    document.querySelectorAll(`[data-rdv="${rdvId}"] .star`).forEach(s => {
+        s.style.color = parseInt(s.dataset.val) <= val ? '#FFD700' : '#3a3530';
+    });
+}
+
+function resetStars(rdvId) {
+    const sel = selectedStars[rdvId] || 0;
+    document.querySelectorAll(`[data-rdv="${rdvId}"] .star`).forEach(s => {
+        s.style.color = parseInt(s.dataset.val) <= sel ? '#D4AF37' : '#3a3530';
+    });
+}
+
+function selectStar(rdvId, val) {
+    selectedStars[rdvId] = val;
+    document.getElementById('note-' + rdvId).value = val;
+    resetStars(rdvId);
+}
+</script>
 </body>
 </html>

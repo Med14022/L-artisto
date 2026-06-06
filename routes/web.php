@@ -25,6 +25,9 @@ Route::get('/reserver/merci', [\App\Http\Controllers\PublicReservationController
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Avis
+    Route::post('/avis', [\App\Http\Controllers\AvisController::class, 'store'])->name('avis.store');
+
     // Rendez-vous
     Route::post('/rendez-vous', [RendezVousController::class, 'store'])->name('rendez-vous.store');
     Route::delete('/rendez-vous/{rendezVous}', [RendezVousController::class, 'destroy'])->name('rendez-vous.destroy');

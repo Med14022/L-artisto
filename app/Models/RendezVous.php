@@ -43,4 +43,9 @@ class RendezVous extends Model
     {
         return $this->belongsTo(User::class, 'id_coiffeur');
     }
+
+    public function avis()
+    {
+        return $this->hasOne(Avis::class, 'rendez_vous_id');
+    }
 }

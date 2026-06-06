@@ -331,6 +331,65 @@
         @endif
     </div>
 
+    <!-- ── AVIS ── -->
+    <div class="section-heading"><span class="dot"></span> Avis Clients</div>
+    <div class="card" style="margin-bottom:28px;">
+        @if($avis->isEmpty())
+            <p class="empty-msg">Aucun avis reçu pour le moment.</p>
+        @else
+        {{-- Moyenne --}}
+        <div style="display:flex;align-items:center;gap:20px;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--border);">
+            <div style="text-align:center;">
+                <div style="font-family:'Playfair Display',serif;font-size:48px;font-weight:700;color:var(--gold);line-height:1;">
+                    {{ number_format($note_moyenne, 1) }}
+                </div>
+                <div style="font-size:22px;letter-spacing:3px;color:var(--gold);">
+                    @for($i=1;$i<=5;$i++)
+                        <span style="color:{{ $i <= round($note_moyenne) ? '#D4AF37' : '#3a3530' }};">★</span>
+                    @endfor
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">{{ $avis->count() }} avis</div>
+            </div>
+            <div style="flex:1;">
+                @foreach([5,4,3,2,1] as $n)
+                @php $count = $avis->where('note', $n)->count(); $pct = $avis->count() ? round($count/$avis->count()*100) : 0; @endphp
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;">
+                    <span style="color:var(--gold);width:14px;">{{ $n }}</span>
+                    <span style="color:var(--gold);font-size:14px;">★</span>
+                    <div style="flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;">
+                        <div style="width:{{ $pct }}%;height:100%;background:var(--gold);border-radius:4px;"></div>
+                    </div>
+                    <span style="color:var(--text-muted);width:28px;text-align:right;">{{ $count }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Liste des avis --}}
+        @foreach($avis as $a)
+        <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#B8860B,#FFD700);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0a0a0a;">
+                        {{ strtoupper(substr($a->client->name ?? '?', 0, 1)) }}
+                    </div>
+                    <span style="font-weight:600;font-size:13px;">{{ $a->client->name ?? 'Client' }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:16px;letter-spacing:1px;">
+                        @for($i=1;$i<=5;$i++)<span style="color:{{ $i<=$a->note ? '#D4AF37' : '#3a3530' }};">★</span>@endfor
+                    </span>
+                    <span style="font-size:11px;color:var(--text-muted);">{{ $a->created_at->diffForHumans() }}</span>
+                </div>
+            </div>
+            @if($a->commentaire)
+            <p style="font-size:13px;color:var(--text-muted);font-style:italic;margin-left:40px;">"{{ $a->commentaire }}"</p>
+            @endif
+        </div>
+        @endforeach
+        @endif
+    </div>
+
     <!-- ── HISTORIQUE ── -->
     <div class="section-heading"><span class="dot"></span> Historique (20 derniers)</div>
     <div class="card">

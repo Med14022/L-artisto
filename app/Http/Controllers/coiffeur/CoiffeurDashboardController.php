@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\coiffeur;
 
 use App\Http\Controllers\Controller;
+use App\Models\Avis;
 use App\Models\RendezVous;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -69,7 +70,18 @@ class CoiffeurDashboardController extends Controller
                 ];
             });
 
-        return view('coiffeur.dashboard', compact('rdvs_today', 'rdvs_upcoming', 'rdvs_history', 'rdvs_calendar'));
+        $avis = Avis::with('client')
+            ->where('id_coiffeur', $coiffeur_id)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $note_moyenne = $avis->avg('note');
+
+        return view('coiffeur.dashboard', compact(
+            'rdvs_today', 'rdvs_upcoming', 'rdvs_history', 'rdvs_calendar',
+            'avis', 'note_moyenne'
+        ));
     }
 
     public function updateStatus(RendezVous $rendezVous, Request $request)

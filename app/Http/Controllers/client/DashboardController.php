@@ -23,7 +23,10 @@ class DashboardController extends Controller
         $users = User::where('role', 'like', '%coiffeur%')->get();
 
         $user_id = Auth::user()->id;
-        $rdvs = RendezVous::where('id_client', $user_id)->get();
+        $rdvs = RendezVous::with(['services', 'coiffeur', 'avis'])
+            ->where('id_client', $user_id)
+            ->orderByDesc('date')
+            ->get();
         return view('dashboard', compact('services', "users", "rdvs"));
     }
 

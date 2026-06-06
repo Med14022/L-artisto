@@ -42,6 +42,12 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('/clients', [\App\Http\Controllers\admin\AdminClientController::class, 'index'])->name('clients.index');
     Route::get('/clients/{user}', [\App\Http\Controllers\admin\AdminClientController::class, 'show'])->name('clients.show');
 
+    // Gestion des horaires coiffeurs
+    Route::get('/horaires', [\App\Http\Controllers\admin\AdminHoraireController::class, 'index'])->name('horaires.index');
+    Route::post('/horaires', [\App\Http\Controllers\admin\AdminHoraireController::class, 'store'])->name('horaires.store');
+    Route::patch('/horaires/{horaire}', [\App\Http\Controllers\admin\AdminHoraireController::class, 'update'])->name('horaires.update');
+    Route::delete('/horaires/{horaire}', [\App\Http\Controllers\admin\AdminHoraireController::class, 'destroy'])->name('horaires.destroy');
+
     // Gestion des rendez-vous
     Route::get('/rendez-vous', [AdminRendezVousController::class, 'index'])->name('rendez-vous.index');
     Route::get('/rendez-vous/create', [AdminRendezVousController::class, 'create'])->name('rendez-vous.create');

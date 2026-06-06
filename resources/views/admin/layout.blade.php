@@ -260,6 +260,9 @@
         <a href="{{ route('admin.clients.index') }}" class="nav-link {{ request()->routeIs('admin.clients*') ? 'active' : '' }}">
             <span class="nav-icon">👥</span> Clients
         </a>
+        <a href="{{ route('admin.horaires.index') }}" class="nav-link {{ request()->routeIs('admin.horaires*') ? 'active' : '' }}">
+            <span class="nav-icon">🕐</span> Horaires
+        </a>
         <div class="nav-label" style="margin-top:16px;">Accès rapide</div>
         <a href="{{ route('dashboard') }}" class="nav-link">
             <span class="nav-icon">👤</span> Vue Client

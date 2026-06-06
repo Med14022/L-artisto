@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\RendezVousConfirmation;
 use App\Models\RendezVous;
 use App\Http\Requests\StoreRendezVousRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class RendezVousController extends Controller
 {
@@ -21,9 +23,14 @@ class RendezVousController extends Controller
 
         $rdv->services()->attach($request->service_id);
 
+        $rdv->load(['client', 'coiffeur', 'services']);
+        if ($rdv->client?->email) {
+            Mail::to($rdv->client->email)->send(new RendezVousConfirmation($rdv));
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Votre rendez-vous a été créé avec succès !',
+            'message' => 'Votre rendez-vous a été créé avec succès ! Un email de confirmation vous a été envoyé.',
         ]);
     }
 

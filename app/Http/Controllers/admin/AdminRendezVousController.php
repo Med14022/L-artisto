@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\RendezVousConfirmation;
 use App\Models\RendezVous;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class AdminRendezVousController extends Controller
 {
@@ -56,8 +58,13 @@ class AdminRendezVousController extends Controller
 
         $rdv->services()->attach($request->service_ids);
 
+        $rdv->load(['client', 'coiffeur', 'services']);
+        if ($rdv->client?->email) {
+            Mail::to($rdv->client->email)->send(new RendezVousConfirmation($rdv));
+        }
+
         return redirect()->route('admin.rendez-vous.index')
-            ->with('success', 'Rendez-vous créé avec succès.');
+            ->with('success', 'Rendez-vous créé avec succès. Un email de confirmation a été envoyé au client.');
     }
 
     public function updateStatus(RendezVous $rendezVous, Request $request)

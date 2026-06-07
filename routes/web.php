@@ -31,8 +31,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rendez-vous
     Route::post('/rendez-vous', [RendezVousController::class, 'store'])->name('rendez-vous.store');
     Route::delete('/rendez-vous/{rendezVous}', [RendezVousController::class, 'destroy'])->name('rendez-vous.destroy');
-    Route::get('/rendez-vous/available-times', [RendezVousController::class, 'availableTimes'])->name('rendez-vous.available-times');
 });
+
+// Route publique — utilisée aussi par la réservation sans compte
+Route::get('/rendez-vous/available-times', [RendezVousController::class, 'availableTimes'])->name('rendez-vous.available-times');
 
 // ─── Routes Profil ───────────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {

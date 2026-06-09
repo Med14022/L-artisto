@@ -290,7 +290,12 @@
                 <div class="appt-time">{{ substr($rdv->heure,0,5) }}</div>
                 <div class="appt-divider"></div>
                 <div class="appt-info">
-                    <div class="appt-client">{{ $rdv->client->name ?? '—' }}</div>
+                    <div class="appt-client">
+                        {{ $rdv->client->name ?? $rdv->nom_client ?? '—' }}
+                        @if(!$rdv->id_client && $rdv->telephone_client)
+                            <span style="font-size:11px;font-weight:400;color:var(--gold);margin-left:8px;">📞 {{ $rdv->telephone_client }}</span>
+                        @endif
+                    </div>
                     <div class="appt-services">{{ $rdv->services->pluck('name')->join(' · ') ?: 'Service non spécifié' }}</div>
                 </div>
                 <span class="badge {{ $badges[$rdv->etat] ?? '' }}" style="margin-right:12px;">{{ $rdv->etat }}</span>
@@ -325,7 +330,12 @@
                 <tr>
                     <td style="font-weight:600;">{{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}</td>
                     <td style="color:var(--gold);font-weight:600;">{{ substr($rdv->heure,0,5) }}</td>
-                    <td>{{ $rdv->client->name ?? '—' }}</td>
+                    <td>
+                        {{ $rdv->client->name ?? $rdv->nom_client ?? '—' }}
+                        @if(!$rdv->id_client && $rdv->telephone_client)
+                            <div style="font-size:11px;color:var(--gold);">📞 {{ $rdv->telephone_client }}</div>
+                        @endif
+                    </td>
                     <td style="color:var(--text-muted);font-size:12px;">{{ $rdv->services->pluck('name')->join(', ') ?: '—' }}</td>
                     <td><span class="badge {{ $badges[$rdv->etat] ?? '' }}">{{ $rdv->etat }}</span></td>
                     <td>

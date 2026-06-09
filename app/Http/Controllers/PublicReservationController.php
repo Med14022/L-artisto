@@ -53,11 +53,13 @@ class PublicReservationController extends Controller
         }
 
         $rdv = RendezVous::create([
-            'id_client'   => null,
-            'id_coiffeur' => $data['id_coiffeur'],
-            'date'        => $data['date'],
-            'heure'       => $data['heure'] . ':00',
-            'etat'        => 'en attente',
+            'id_client'        => null,
+            'id_coiffeur'      => $data['id_coiffeur'],
+            'date'             => $data['date'],
+            'heure'            => $data['heure'] . ':00',
+            'etat'             => 'en attente',
+            'nom_client'       => $data['nom'],
+            'telephone_client' => $data['telephone'],
         ]);
 
         $rdv->services()->attach($data['service_id']);

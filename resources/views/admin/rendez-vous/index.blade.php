@@ -36,7 +36,12 @@
             @php $badges = ['en attente'=>'badge-pending','confirmé'=>'badge-confirmed','terminé'=>'badge-done','annulé'=>'badge-cancelled']; @endphp
             <tr>
                 <td style="color:var(--text-muted);font-size:12px;">#{{ $rdv->id }}</td>
-                <td style="font-weight:600;">{{ $rdv->client->name ?? '—' }}</td>
+                <td style="font-weight:600;">
+                    {{ $rdv->client->name ?? $rdv->nom_client ?? '—' }}
+                    @if(!$rdv->id_client && $rdv->telephone_client)
+                        <div style="font-size:11px;color:var(--gold);">📞 {{ $rdv->telephone_client }}</div>
+                    @endif
+                </td>
                 <td>{{ $rdv->coiffeur->name ?? '—' }}</td>
                 <td style="color:var(--text-muted);font-size:12px;">{{ $rdv->services->pluck('name')->join(', ') ?: '—' }}</td>
                 <td>{{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}</td>

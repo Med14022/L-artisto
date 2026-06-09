@@ -19,12 +19,13 @@ class RendezVous extends Model
 {
     use HasFactory;
     protected $fillable = [
-
         'date',
         'heure',
         'etat',
         'id_client',
         'id_coiffeur',
+        'nom_client',
+        'telephone_client',
     ];
 
     protected $table = 'rendez_vouses';

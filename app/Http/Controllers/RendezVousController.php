@@ -24,13 +24,19 @@ class RendezVousController extends Controller
         $rdv->services()->attach($request->service_id);
 
         $rdv->load(['client', 'coiffeur', 'services']);
+        $emailEnvoye = false;
         if ($rdv->client?->email) {
-            Mail::to($rdv->client->email)->send(new RendezVousConfirmation($rdv));
+            try {
+                Mail::to($rdv->client->email)->send(new RendezVousConfirmation($rdv));
+                $emailEnvoye = true;
+            } catch (\Throwable) {}
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Votre rendez-vous a été créé avec succès ! Un email de confirmation vous a été envoyé.',
+            'message' => $emailEnvoye
+                ? 'Votre rendez-vous a été créé ! Un email de confirmation vous a été envoyé.'
+                : 'Votre rendez-vous a été créé avec succès !',
         ]);
     }
 

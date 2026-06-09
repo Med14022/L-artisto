@@ -60,11 +60,13 @@ class AdminRendezVousController extends Controller
 
         $rdv->load(['client', 'coiffeur', 'services']);
         if ($rdv->client?->email) {
-            Mail::to($rdv->client->email)->send(new RendezVousConfirmation($rdv));
+            try {
+                Mail::to($rdv->client->email)->send(new RendezVousConfirmation($rdv));
+            } catch (\Throwable) {}
         }
 
         return redirect()->route('admin.rendez-vous.index')
-            ->with('success', 'Rendez-vous créé avec succès. Un email de confirmation a été envoyé au client.');
+            ->with('success', 'Rendez-vous créé avec succès.');
     }
 
     public function updateStatus(RendezVous $rendezVous, Request $request)

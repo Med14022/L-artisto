@@ -39,7 +39,7 @@
                     Aucun jour planifié. Utilisez le formulaire ci-contre pour en ajouter.
                 </p>
             @else
-            <table>
+            <div class="table-wrap"><table>
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -78,7 +78,7 @@
                     </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
             @endif
         </div>
     </div>

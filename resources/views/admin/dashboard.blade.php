@@ -113,7 +113,7 @@
         <div class="card-title">Derniers Rendez-vous</div>
         <a href="{{ route('admin.rendez-vous.index') }}" class="btn btn-ghost btn-sm">Voir tout →</a>
     </div>
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr>
                 <th>Client</th>
@@ -144,7 +144,7 @@
             <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">Aucun rendez-vous pour l'instant.</td></tr>
             @endforelse
         </tbody>
-    </table>
+    </table></div>
 </div>
 
 @endsection

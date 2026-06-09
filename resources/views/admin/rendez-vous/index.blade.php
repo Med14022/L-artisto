@@ -18,7 +18,7 @@
 @section('content')
 
 <div class="card">
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr>
                 <th>#</th>
@@ -70,7 +70,7 @@
             <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px;">Aucun rendez-vous enregistré.</td></tr>
             @endforelse
         </tbody>
-    </table>
+    </table></div>
     <div class="pagination" style="margin-top:20px;">{{ $rdvs->links() }}</div>
 </div>
 

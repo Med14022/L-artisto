@@ -6,7 +6,7 @@
 @section('content')
 
 <div class="card">
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr>
                 <th>#</th>
@@ -45,7 +45,7 @@
             <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px;">Aucun client inscrit.</td></tr>
             @endforelse
         </tbody>
-    </table>
+    </table></div>
     <div class="pagination" style="margin-top:20px;">{{ $clients->links() }}</div>
 </div>
 

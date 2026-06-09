@@ -10,7 +10,7 @@
 @section('content')
 
 <div class="card">
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr>
                 <th>Image</th>
@@ -58,7 +58,7 @@
             </td></tr>
             @endforelse
         </tbody>
-    </table>
+    </table></div>
     <div class="pagination" style="margin-top:20px;">{{ $services->links() }}</div>
 </div>
 

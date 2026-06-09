@@ -104,7 +104,7 @@
     @if($rdvs->isEmpty())
         <p style="text-align:center;color:var(--text-muted);padding:40px;">Aucun rendez-vous pour ce client.</p>
     @else
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr>
                 <th>Date</th>
@@ -126,7 +126,7 @@
             </tr>
             @endforeach
         </tbody>
-    </table>
+    </table></div>
     @endif
 </div>
 
